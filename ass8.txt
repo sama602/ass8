@@ -1,0 +1,210 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+
+// Sorting function
+void sort(int a[], int n)
+{
+    int i, j, temp;
+
+    for (i = 0; i < n - 1; i++)
+    {
+        for (j = 0; j < n - i - 1; j++)
+        {
+            if (a[j] > a[j + 1])
+            {
+                temp = a[j];
+                a[j] = a[j + 1];
+                a[j + 1] = temp;
+            }
+        }
+    }
+}
+
+int main()
+{
+    int n, head, cylinders;
+    int req[100], a[100];
+    int left[100], right[100];
+    int l = 0, r = 0;
+    int i, j, current, total;
+
+    printf("Enter number of disk requests: ");
+    scanf("%d", &n);
+
+    if (n < 1 || n > 100)
+    {
+        printf("Invalid number of requests.\n");
+        return 1;
+    }
+
+    printf("Enter disk requests:\n");
+
+    for (i = 0; i < n; i++)
+    {
+        scanf("%d", &req[i]);
+    }
+
+    printf("Enter initial head position: ");
+    scanf("%d", &head);
+
+    printf("Enter total number of cylinders: ");
+    scanf("%d", &cylinders);
+
+    if (cylinders < 1 || head < 0 || head >= cylinders)
+    {
+        printf("Invalid disk size or head position.\n");
+        return 1;
+    }
+
+    // Copy and validate requests
+    for (i = 0; i < n; i++)
+    {
+        if (req[i] < 0 || req[i] >= cylinders)
+        {
+            printf("Invalid request.\n");
+            return 1;
+        }
+
+        a[i] = req[i];
+    }
+
+    // Sort requests
+    sort(a, n);
+
+    // Divide requests around initial head
+    for (i = 0; i < n; i++)
+    {
+        if (a[i] <= head)
+        {
+            left[l++] = a[i];
+        }
+        else
+        {
+            right[r++] = a[i];
+        }
+    }
+
+    // ---------------- SSTF ----------------
+
+    printf("\nSSTF:\n");
+
+    int visited[100] = {0};
+
+    current = head;
+    total = 0;
+
+    printf("Service order: ");
+
+    for (i = 0; i < n; i++)
+    {
+        int best = -1;
+        int distance = 99999;
+
+        for (j = 0; j < n; j++)
+        {
+            if (visited[j] == 0)
+            {
+                int d = abs(req[j] - current);
+
+                if (d < distance)
+                {
+                    distance = d;
+                    best = j;
+                }
+            }
+        }
+
+        visited[best] = 1;
+
+        total += abs(req[best] - current);
+        current = req[best];
+
+        printf("%d ", current);
+    }
+
+    printf("\nTotal head movement = %d\n", total);
+
+    // ---------------- SCAN ----------------
+
+    printf("\nSCAN (towards 0 first):\n");
+
+    current = head;
+    total = 0;
+
+    printf("Service order: ");
+
+    // Service left requests in descending order
+    for (i = l - 1; i >= 0; i--)
+    {
+        total += abs(current - left[i]);
+        current = left[i];
+
+        printf("%d ", current);
+    }
+
+    // Move to cylinder 0
+    total += current;
+    current = 0;
+
+    // Move right and service remaining requests
+    for (i = 0; i < r; i++)
+    {
+        total += abs(right[i] - current);
+        current = right[i];
+
+        printf("%d ", current);
+    }
+
+    printf("\nTotal head movement = %d\n", total);
+
+    // ---------------- C-LOOK ----------------
+
+    printf("\nC-LOOK (towards 0 first):\n");
+
+    current = head;
+    total = 0;
+
+    printf("Service order: ");
+
+    // Service left requests in descending order
+    for (i = l - 1; i >= 0; i--)
+    {
+        total += abs(current - left[i]);
+        current = left[i];
+
+        printf("%d ", current);
+    }
+
+    // Jump to highest pending request
+    if (r > 0)
+    {
+        total += abs(current - right[r - 1]);
+        current = right[r - 1];
+
+        printf("%d ", current);
+
+        // Continue in descending order
+        for (i = r - 2; i >= 0; i--)
+        {
+            total += abs(current - right[i]);
+            current = right[i];
+
+            printf("%d ", current);
+        }
+    }
+
+    printf("\nTotal head movement = %d\n", total);
+
+    return 0;
+}
+
+
+gcc Assignment8.c -o Assignment8
+./Assignment8
+
+Enter number of disk requests: 5
+Enter disk requests:
+10 20 40 60 80
+Enter initial head position: 50
+Enter total number of cylinders: 100
